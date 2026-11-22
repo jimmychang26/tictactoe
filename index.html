@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eco TicTacToe — Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful, confident, like the finished app on a phone
+   IDEA: the book's cover come to life: navy night sky, blue rings, gold winning line
+   PICTURE: the live 3x3 board itself, large, right under a modest title
+   COLOUR and TYPE: deep navy field, electric blue rings, gold accent; Nunito rounded, PingFang/Noto for Chinese
+   LAYOUT: one centred column: title, score, message, board, level picker, New Game, then the book card */
+:root{color-scheme:dark;--bg:#0b1f47;--deep:#061230;--ink:#ffffff;--soft:#cfe0ff;--muted:#8fb3e6;--blue:#2f8cff;--o:#6cb8ff;--gold:#f5c542;--good:#5be08f;--bad:#ff7a6b}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;color:var(--ink);overflow-x:clip;
+  background:radial-gradient(120% 80% at 50% 30%,#163a7a 0%,var(--bg) 55%,var(--deep) 100%) fixed;
+  font:16px/1.5 "Nunito",-apple-system,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Helvetica Neue",sans-serif}
+main{max-width:460px;margin:0 auto;padding:clamp(18px,4vh,40px) 18px 32px;display:flex;flex-direction:column;align-items:center}
+.top{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.series{font-size:13px;font-weight:700;color:var(--muted)}
+.lang{display:flex;background:rgba(255,255,255,.08);border-radius:999px;padding:3px}
+.lang button{all:unset;cursor:pointer;font:700 13px/1 inherit;font-family:inherit;padding:8px 12px;border-radius:999px;color:var(--soft);min-width:44px;text-align:center}
+.lang button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.lang button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+h1{margin:6px 0 2px;font-size:clamp(32px,8vw,44px);line-height:1.05;font-weight:900;letter-spacing:-.02em;text-align:center;text-wrap:balance}
+h1 span{color:var(--gold)}
+.sub{margin:0 0 18px;color:var(--soft);font-weight:600;text-align:center}
+.score{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;margin-bottom:12px}
+.tile{background:rgba(255,255,255,.07);border-radius:14px;padding:8px 4px;text-align:center}
+.num{font-size:28px;font-weight:900;line-height:1.15;font-variant-numeric:tabular-nums}
+.cap{font-size:13px;color:var(--muted);font-weight:700}
+.msg{min-height:30px;font-size:19px;font-weight:800;margin:2px 0 14px;text-align:center}
+.msg.good{color:var(--good)}.msg.bad{color:var(--bad)}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,3vw,16px);width:100%;perspective:600px}
+.sq{all:unset;box-sizing:border-box;aspect-ratio:1/1;border-radius:50%;border:clamp(5px,1.6vw,8px) solid var(--blue);background:rgba(255,255,255,.04);
+  display:flex;align-items:center;justify-content:center;font:900 clamp(44px,15vw,78px)/1 "Nunito",sans-serif;color:var(--ink);cursor:pointer;
+  transition:background .2s,border-color .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
+.sq:hover:not(:disabled){background:rgba(47,140,255,.16)}
+.sq:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.sq:disabled{cursor:default}
+.sq.o{color:var(--o)}
+.sq.win{background:var(--gold);border-color:var(--gold);color:var(--bg);box-shadow:0 0 34px rgba(245,197,66,.55)}
+.sq.flip{animation:flip .32s ease-out}
+@keyframes flip{from{transform:rotateY(180deg)}to{transform:rotateY(0)}}
+.levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;background:rgba(255,255,255,.08);border-radius:14px;padding:4px;margin:20px 0 14px}
+.levels button{all:unset;cursor:pointer;text-align:center;padding:11px 0;border-radius:11px;font:800 16px/1.2 inherit;font-family:inherit;color:var(--soft)}
+.levels button.on{background:var(--ink);color:var(--bg)}
+.levels button:focus-visible{outline:2px solid var(--gold)}
+.new{all:unset;cursor:pointer;background:var(--blue);color:#fff;font:800 17px/1 inherit;font-family:inherit;padding:14px 30px;border-radius:14px;box-shadow:0 6px 18px rgba(47,140,255,.35)}
+.new:active{transform:translateY(1px)}
+.new:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.hint{color:var(--muted);font-size:14px;text-align:center;margin:14px 0 0;max-width:36ch}
+.book{margin-top:28px;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:16px 18px;display:flex;gap:14px;align-items:center}
+.book svg{flex:none}
+.book p{margin:0;font-size:14px;color:var(--soft)}
+.book b{color:var(--ink)}
+.book a{color:var(--gold);font-weight:800;text-decoration:none}
+.book a:hover{text-decoration:underline}
+@media (prefers-reduced-motion:reduce){.sq.flip{animation:none}.sq{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="series" id="series">Effortless Coding Series</div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="lang-en" aria-pressed="true">EN</button>
+      <button type="button" id="lang-zh" aria-pressed="false">中文</button>
+    </div>
+  </div>
+  <h1 id="title">Eco <span>TicTacToe</span></h1>
+  <p class="sub" id="sub">You are X. Can you beat the computer?</p>
+
+  <div class="score">
+    <div class="tile"><div class="num" id="s0">0</div><div class="cap" id="c0">You</div></div>
+    <div class="tile"><div class="num" id="s1">0</div><div class="cap" id="c1">Draw</div></div>
+    <div class="tile"><div class="num" id="s2">0</div><div class="cap" id="c2">Computer</div></div>
+  </div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+  <div class="board" id="board"></div>
+  <div class="levels" id="levels" role="group" aria-label="Level"></div>
+  <button type="button" class="new" id="new">↺ New Game</button>
+  <p class="hint" id="hint"></p>
+
+  <div class="book">
+    <svg width="44" height="44" viewBox="0 0 90 90" aria-hidden="true"><g fill="none" stroke="#2f8cff" stroke-width="5"><circle cx="15" cy="15" r="11" fill="#f5c542" stroke="#f5c542"/><circle cx="45" cy="15" r="11"/><circle cx="75" cy="15" r="11"/><circle cx="15" cy="45" r="11"/><circle cx="45" cy="45" r="11" fill="#f5c542" stroke="#f5c542"/><circle cx="75" cy="45" r="11"/><circle cx="15" cy="75" r="11"/><circle cx="45" cy="75" r="11"/><circle cx="75" cy="75" r="11" fill="#f5c542" stroke="#f5c542"/></g></svg>
+    <p id="bookline"></p>
+  </div>
+</main>
+
+<script>
+{
+const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const TEXT={
+ en:{series:"Effortless Coding Series",sub:"You are X. Can you beat the computer?",turn:"Your turn — you are X",thinking:"Computer is thinking…",win:"You win! 🎉",lose:"Computer wins",draw:"It’s a draw",
+     caps:["You","Draw","Computer"],levels:["Easy","Medium","Pro"],newGame:"↺ New Game",
+     hints:["Easy picks any empty square. You should win most games.","Medium never misses a win or a block. Try a fork: one move, two threats.","Pro uses MiniMax and looks ahead at every possible game. It never loses."],
+     book:'From the book <b>Eco TicTacToe</b> by James Chang, which shows how to build this game as an iPhone app with SwiftUI. <a href="https://books.apple.com/us/book/id6445960561">Free on Apple Books →</a>',
+     row:(r,c)=>`Row ${r}, column ${c}`,empty:"empty",lang:"en"},
+ zh:{series:"简易编程系列",sub:"你执 X。你能打败电脑吗？",turn:"轮到你了（你是 X）",thinking:"电脑正在思考……",win:"你赢了！🎉",lose:"电脑赢了",draw:"和局",
+     caps:["你","和局","电脑"],levels:["简单","中等","专业"],newGame:"↺ 新游戏",
+     hints:["简单难度随机挑一个空格，你大部分时候都会赢。","中等难度从不漏掉致胜或该挡的一步。试试双杀：一步棋，两个威胁。","专业难度使用 MiniMax，预先看遍每一种可能的棋局，永远不会输。"],
+     book:'出自 James Chang 的《<b>井字棋 Eco TicTacToe</b>》，书中教你用 SwiftUI 把这个游戏做成 iPhone 应用。<a href="https://books.apple.com/us/book/id6446066860">在 Apple Books 免费阅读 →</a>',
+     row:(r,c)=>`第 ${r} 行，第 ${c} 列`,empty:"空",lang:"zh-Hans"}
+};
+
+/* Board, ComputerPlayer and Game: the same rules as the Swift app (Chapters 4, 7, 8, 9) */
+const winner=b=>{for(const l of LINES){if(b[l[0]]&&b[l[0]]===b[l[1]]&&b[l[0]]===b[l[2]])return{player:b[l[0]],line:l}}return null};
+const empties=b=>b.map((v,i)=>v?-1:i).filter(i=>i>=0);
+const placing=(b,p,s)=>{const c=b.slice();c[s]=p;return c};
+const other=p=>p==="X"?"O":"X";
+const random=a=>a.length?a[Math.floor(Math.random()*a.length)]:null;
+const winningMove=(b,p)=>{for(const s of empties(b)){const w=winner(placing(b,p,s));if(w&&w.player===p)return s}return null};
+function minimax(b,toMove,me,depth){
+  const w=winner(b); if(w)return w.player===me?10-depth:depth-10;
+  const e=empties(b); if(!e.length)return 0;
+  let best=toMove===me?-Infinity:Infinity;
+  for(const s of e){const v=minimax(placing(b,toMove,s),other(toMove),me,depth+1);best=toMove===me?Math.max(best,v):Math.min(best,v)}
+  return best;
+}
+function bestMove(b,p){let best=null,score=-Infinity;for(const s of empties(b)){const v=minimax(placing(b,p,s),other(p),p,1);if(v>score){score=v;best=s}}return best}
+function chooseMove(b,p,level){
+  if(winner(b)||!empties(b).length)return null;
+  if(level===0)return random(empties(b));
+  if(level===1){const m=winningMove(b,p);if(m!==null)return m;const k=winningMove(b,other(p));if(k!==null)return k;return random(empties(b))}
+  return bestMove(b,p);
+}
+
+const $=id=>document.getElementById(id);
+const boardEl=$("board"),levelsEl=$("levels"),msgEl=$("msg");
+let T=TEXT.en,board,status,line,thinking=false,round=0,level=2,score=[0,0,0];
+try{const saved=localStorage.getItem("eco-lang");if(saved==="zh")T=TEXT.zh}catch(e){}
+
+const squares=Array.from({length:9},(_,i)=>{const b=document.createElement("button");b.type="button";b.className="sq";b.addEventListener("click",()=>play(i));boardEl.appendChild(b);return b});
+const levelBtns=[0,1,2].map(i=>{const b=document.createElement("button");b.type="button";b.addEventListener("click",()=>{level=i;newGame()});levelsEl.appendChild(b);return b});
+$("new").addEventListener("click",()=>newGame());
+$("lang-en").addEventListener("click",()=>setLang("en"));
+$("lang-zh").addEventListener("click",()=>setLang("zh"));
+
+function setLang(k){T=TEXT[k];try{localStorage.setItem("eco-lang",k)}catch(e){}render()}
+const canPlay=i=>status==="playing"&&!thinking&&!board[i];
+function updateStatus(){
+  const w=winner(board);
+  if(w){status=w.player==="X"?"won":"lost";line=w.line;score[w.player==="X"?0:2]++}
+  else if(!empties(board).length){status="draw";line=[];score[1]++}
+}
+function render(){
+  document.documentElement.lang=T.lang;
+  $("series").textContent=T.series;$("sub").textContent=T.sub;$("new").textContent=T.newGame;$("bookline").innerHTML=T.book;$("hint").textContent=T.hints[level];
+  $("lang-en").setAttribute("aria-pressed",T===TEXT.en);$("lang-zh").setAttribute("aria-pressed",T===TEXT.zh);
+  T.caps.forEach((c,i)=>{$("c"+i).textContent=c;$("s"+i).textContent=score[i]});
+  levelBtns.forEach((b,i)=>{b.textContent=T.levels[i];b.classList.toggle("on",i===level);b.setAttribute("aria-pressed",i===level)});
+  squares.forEach((s,i)=>{
+    const m=board[i]||"";
+    if(s.textContent!==m){s.textContent=m;if(m){s.classList.remove("flip");void s.offsetWidth;s.classList.add("flip")}}
+    s.classList.toggle("o",m==="O");s.classList.toggle("win",line.includes(i));s.disabled=!canPlay(i);
+    s.setAttribute("aria-label",T.row(Math.floor(i/3)+1,i%3+1)+", "+(m||T.empty));
+  });
+  msgEl.textContent=status==="won"?T.win:status==="lost"?T.lose:status==="draw"?T.draw:thinking?T.thinking:T.turn;
+  msgEl.className="msg"+(status==="won"?" good":status==="lost"?" bad":"");
+}
+function play(i){
+  if(!canPlay(i))return;
+  board[i]="X";updateStatus();
+  if(status!=="playing"){render();return}
+  thinking=true;render();
+  const myRound=round;
+  setTimeout(()=>{if(myRound!==round)return;const m=chooseMove(board,"O",level);if(m!==null){board[m]="O";updateStatus()}thinking=false;render()},450);
+}
+function newGame(){round++;board=Array(9).fill(null);status="playing";line=[];thinking=false;render()}
+newGame();
+}
+</script>
+</body>
+</html>
