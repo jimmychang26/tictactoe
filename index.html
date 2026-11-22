@@ -133,6 +133,7 @@ const $=id=>document.getElementById(id);
 const boardEl=$("board"),levelsEl=$("levels"),msgEl=$("msg");
 let T=TEXT.en,board,status,line,thinking=false,round=0,level=2,score=[0,0,0];
 try{const saved=localStorage.getItem("eco-lang");if(saved==="zh")T=TEXT.zh}catch(e){}
+if(location.hash==="#zh")T=TEXT.zh;else if(location.hash==="#en")T=TEXT.en;
 
 const squares=Array.from({length:9},(_,i)=>{const b=document.createElement("button");b.type="button";b.className="sq";b.addEventListener("click",()=>play(i));boardEl.appendChild(b);return b});
 const levelBtns=[0,1,2].map(i=>{const b=document.createElement("button");b.type="button";b.addEventListener("click",()=>{level=i;newGame()});levelsEl.appendChild(b);return b});
